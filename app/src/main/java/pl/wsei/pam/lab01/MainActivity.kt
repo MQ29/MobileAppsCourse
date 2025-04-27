@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import pl.wsei.pam.lab02.Lab02Activity
+import pl.wsei.pam.lab06.Lab06Activity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,5 +34,11 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, Lab02Activity::class.java)
         startActivity(intent)
         Toast.makeText(this, "Clicked", Toast.LENGTH_SHORT).show()
+    }
+    
+    fun onClickMainBtnRunLab06(v: View){
+        val intent = Intent(this, Lab06Activity::class.java)
+        startActivity(intent)
+        Toast.makeText(this, "Running Lab06", Toast.LENGTH_SHORT).show()
     }
 }

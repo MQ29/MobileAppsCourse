@@ -18,7 +18,6 @@ class Lab02Activity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_lab02)
 
-        // Ustawienie listenerów dla przycisków
         findViewById<Button>(R.id.main_6_6_board).setOnClickListener { onBoardSizeSelected(it) }
         findViewById<Button>(R.id.main_4_4_board).setOnClickListener { onBoardSizeSelected(it) }
         findViewById<Button>(R.id.main_4_3_board).setOnClickListener { onBoardSizeSelected(it) }
@@ -31,7 +30,6 @@ class Lab02Activity : AppCompatActivity() {
         }
     }
 
-    // Funkcja obsługująca kliknięcie przycisku
     fun onBoardSizeSelected(view: View) {
         val tag: String? = view.tag as String?
         val tokens: List<String>? = tag?.split(" ")

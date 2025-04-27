@@ -10,7 +10,9 @@ import java.util.*
 class MemoryBoardView(
     private val gridLayout: GridLayout,
     private val cols: Int,
-    private val rows: Int
+    private val rows: Int,
+    private val savedIcons: Array<Int>? = null,
+    private val savedRevealed: IntArray? = null
 ) {
     private val tiles: MutableMap<String, Tile> = mutableMapOf()
 
@@ -24,22 +26,30 @@ class MemoryBoardView(
         R.drawable.baseline_star_24,
         R.drawable.baseline_laptop_windows_24,
         R.drawable.baseline_language_24,
-        R.drawable.baseline_audiotrack_24,
-        R.drawable.baseline_audiotrack_24,
-        R.drawable.baseline_audiotrack_24
+        R.drawable.baseline_email_24,
+        R.drawable.baseline_favorite_24,
+        R.drawable.baseline_home_24,
+        R.drawable.baseline_settings_24,
+        R.drawable.baseline_camera_24,
+        R.drawable.baseline_cloud_24,
+        R.drawable.baseline_bluetooth_24,
+        R.drawable.baseline_location_on_24,
+        R.drawable.baseline_wifi_24
     )
 
     private val deckResource: Int = R.drawable.bg_button
-
     private var onGameChangeStateListener: (MemoryGameEvent) -> Unit = { _ -> }
     private val matchedPair: Stack<Tile> = Stack()
     private val logic: MemoryGameLogic = MemoryGameLogic(cols * rows / 2)
 
     init {
-        val shuffledIcons: MutableList<Int> = mutableListOf<Int>().also {
-            it.addAll(icons.subList(0, cols * rows / 2))
-            it.addAll(icons.subList(0, cols * rows / 2))
-            it.shuffle()
+        val iconList: MutableList<Int> = if (savedIcons != null) {
+            savedIcons.toMutableList()
+        } else {
+            mutableListOf<Int>().apply {
+                addAll(icons.shuffled().take(cols * rows / 2).flatMap { listOf(it, it) })
+                shuffle()
+            }
         }
 
         for (row in 0 until rows) {
@@ -52,25 +62,45 @@ class MemoryBoardView(
                         rowSpec = GridLayout.spec(row, 1, 1f)
                     }
                     this.layoutParams = layoutParams
-                    tag = "$row$col"
+                    tag = "$row-$col"
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
-
                 }
+
                 gridLayout.addView(button)
-                val iconRes = shuffledIcons.removeFirst()
-                addTile(button, iconRes)
+                val iconRes = iconList.removeFirst()
+                val tile = Tile(button, iconRes, deckResource)
+
+                if (savedRevealed != null) {
+                    val index = row * cols + col
+                    tile.revealed = savedRevealed.getOrNull(index) == iconRes
+                }
+
+                button.setOnClickListener(::onClickTile)
+                tiles[button.tag.toString()] = tile
             }
         }
     }
 
     private fun onClickTile(v: View) {
         val tile = tiles[v.tag]
+        
+        // Ignoruj kliknięcie jeśli karta jest już odkryta
+        if (tile?.revealed == true) {
+            return
+        }
+        
         tile?.revealed = true
         matchedPair.push(tile)
         val matchResult = logic.process {
             tile?.tileResource ?: -1
         }
         onGameChangeStateListener(MemoryGameEvent(matchedPair.toList(), matchResult))
+        
+        // Wyłącz słuchacza kliknięć dla dopasowanych kart
+        if (matchResult == GameStates.Match) {
+            matchedPair.forEach { it.button.setOnClickListener(null) }
+        }
+        
         if (matchResult != GameStates.Matching) {
             matchedPair.clear()
         }
@@ -80,29 +110,13 @@ class MemoryBoardView(
         onGameChangeStateListener = listener
     }
 
-    private fun addTile(button: ImageButton, resourceImage: Int) {
-        button.setOnClickListener(::onClickTile)
-        val tile = Tile(button, resourceImage, deckResource)
-        tiles[button.tag.toString()] = tile
-    }
-
     fun getState(): IntArray {
         return tiles.values.map {
             if (it.revealed) it.tileResource else -1
         }.toIntArray()
     }
 
-    fun setState(state: IntArray) {
-        val revealedTiles = state.withIndex()
-            .filter { it.value != -1 }
-            .associate { it.index to it.value }
-
-        val keys = tiles.keys.sorted() // 00, 01, 02...
-        for ((index, key) in keys.withIndex()) {
-            val tile = tiles[key]
-            if (tile != null) {
-                tile.revealed = revealedTiles.containsKey(index)
-            }
-        }
+    fun getFullState(): Array<Int> {
+        return tiles.values.map { it.tileResource }.toTypedArray()
     }
 }
